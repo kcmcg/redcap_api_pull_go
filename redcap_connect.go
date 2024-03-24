@@ -6,10 +6,11 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"net/http"
-	"bytes"
+	"strings"
+	"localhost/redcap_connect/redcap"
 )
 
-func sendREDCapRequest(params map[string]string) (map[string]interface{},error) {
+func sendREDCapRequest(params map[string]string) (interface{},error) {
 	requestBody := ""
 
 	for param,value := range params {
@@ -20,7 +21,7 @@ func sendREDCapRequest(params map[string]string) (map[string]interface{},error) 
 	}
 	requestUrl := "https://redcap.vanderbilt.edu/api/"
 
-	bodyReader := bytes.NewReader([]byte(requestBody))
+	bodyReader := strings.NewReader(requestBody)
 
 	resp, err := http.Post(requestUrl, "application/x-www-form-urlencoded", bodyReader)
 	if err != nil {
@@ -29,14 +30,12 @@ func sendREDCapRequest(params map[string]string) (map[string]interface{},error) 
 	}
 
 	fmt.Println("Received a response!")
-	
+	fmt.Println(resp.StatusCode)
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	
-	fmt.Println(string(body))
-
-	var responseString map[string]interface{}
+	var responseString interface{}
 
 	json.Unmarshal([]byte(body), &responseString)
 
@@ -70,6 +69,12 @@ func fetchApiToken() (string,error) {
 }
 
 func main() {
+	db, err := redcap.ConnectToDb() 
+	pingErr := db.Ping()
+	if pingErr != nil {
+		fmt.Println(pingErr)
+	}
+
 	token, err := fetchApiToken()
 	if err != nil {
 		return
@@ -89,5 +94,10 @@ func main() {
 //	body["api_token"] = token
 //
 	responseString,err := sendREDCapRequest(requestParams)
-	fmt.Println(responseString)
+	
+	recordList := responseString.([]interface{})
+	for _,recordObj := range recordList {
+		record := recordObj.(map[string]interface{})
+		fmt.Println("Record is",record["record_id"])
+	}
 }
