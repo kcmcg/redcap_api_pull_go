@@ -10,16 +10,16 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type credentials struct {
-	host string
-	port string
-	db string
-	user string
-	password string
+type Credentials struct {
+	Host string
+	Port string
+	Db string
+	User string
+	Password string
 }
 
-func getCredentials() (credentials, error) {
-	creds := credentials{}
+func getCredentials() (Credentials, error) {
+	creds := Credentials{}
 	jsonFile, err := os.Open("../credentials/redcap_db.json")
 	if err != nil {
 		fmt.Println(err)
@@ -48,7 +48,7 @@ func ConnectToDb() (*sql.DB, error) {
 		return nil,err
 	}
 	fmt.Println(params) 
-	connString := params.user + ":" + params.password + "@" + params.host + ":" + params.port + "/" + params.db
+	connString := params.User + ":" + params.Password + "@" + params.Host + ":" + params.Port + "/" + params.Db
 	fmt.Println(connString)
 
 	db, err := sql.Open("mysql", connString)
